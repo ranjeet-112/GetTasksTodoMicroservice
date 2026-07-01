@@ -1,20 +1,34 @@
-# Use the official Python image as the base image
-FROM python:3.9
+FROM python:3.11-bookworm
 
-# Set the working directory in the container
 WORKDIR /app
 
-# Copy the application files into the container
+COPY requirements.txt .
+
+RUN apt-get update && \
+    apt-get install -y \
+        curl \
+        gnupg \
+        ca-certificates \
+        unixodbc \
+        unixodbc-dev && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN mkdir -p /etc/apt/keyrings && \
+    curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | \
+    gpg --dearmor -o /etc/apt/keyrings/microsoft.gpg
+
+RUN echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/microsoft.gpg] https://packages.microsoft.com/debian/12/prod bookworm main" > /etc/apt/sources.list.d/microsoft-prod.list
+
+RUN apt-get update && \
+    ACCEPT_EULA=Y apt-get install -y msodbcsql18 && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN pip install --upgrade pip
+
+RUN pip install --no-cache-dir -r requirements.txt
+
 COPY . .
 
-# Install necessary packages
-RUN apt-get update && apt-get install -y unixodbc unixodbc-dev
-RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add -
-RUN curl https://packages.microsoft.com/config/debian/10/prod.list > /etc/apt/sources.list.d/mssql-release.list
-RUN apt-get update
-RUN ACCEPT_EULA=Y apt-get install -y msodbcsql17
+EXPOSE 8000
 
-RUN pip install -r requirements.txt
-
-# Start the FastAPI application
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn","app:app","--host","0.0.0.0","--port","8000"]
