@@ -1,4 +1,4 @@
-name: Build Scan and Push Docker Image
+name: Build, Scan and Push Docker Image
 
 on:
   push:
@@ -12,8 +12,12 @@ jobs:
   docker:
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: read
+      security-events: write
+
     steps:
-      - name: Checkout Source
+      - name: Checkout Source Code
         uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
@@ -25,25 +29,28 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
+      # Build image locally (don't push yet)
       - name: Build Docker Image
         uses: docker/build-push-action@v6
         with:
           context: .
           file: ./Dockerfile
-          push: false
           load: true
+          push: false
           tags: microtodo-ui:latest
 
-      - name: Scan Docker Image using Trivy
-        uses: aquasecurity/trivy-action@0.28.0
+      # Scan image using Trivy
+      - name: Scan Docker Image with Trivy
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
-          image-ref: microtodo-ui:latest
-          format: table
-          exit-code: 1
+          image-ref: "microtodo-ui:latest"
+          format: "table"
+          exit-code: "1"
           ignore-unfixed: true
-          vuln-type: os,library
-          severity: CRITICAL,HIGH
+          vuln-type: "os,library"
+          severity: "HIGH,CRITICAL"
 
+      # Push only if scan passed
       - name: Push Docker Image
         uses: docker/build-push-action@v6
         with:
