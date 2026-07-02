@@ -6,7 +6,7 @@ on:
       - main
 
 env:
-  IMAGE_NAME: GetTaskTodoMicroservice-v1
+  IMAGE_NAME: gettasktodomicroservice-v1
   REGISTRY: ghcr.io
 
 jobs:
@@ -41,13 +41,13 @@ jobs:
           file: ./Dockerfile
           load: true
           push: false
-          tags: ghcr.io/${{ github.repository_owner }}/GetTaskTodoMicroservice-v1
+          tags: ghcr.io/${{ github.repository_owner }}/gettasktodomicroservice-v1
 
       # Scan image using Trivy
       - name: Scan Docker Image with Trivy
         uses: aquasecurity/trivy-action@v0.36.0
         with:
-          image-ref: ghcr.io/${{ github.repository_owner }}/GetTaskTodoMicroservice-v1
+          image-ref: ghcr.io/${{ github.repository_owner }}/gettasktodomicroservice-v1
           format: table
           exit-code: "0"
           ignore-unfixed: true
